@@ -263,5 +263,8 @@ class MyPlayerBrain(object):
                                                 p.car is None and
                                                 p.lobby is not None and p.destination is not None)]
             #rand.shuffle(pickup)
-            pickup.sort(key = lambda x:len(self.calculatePathPlus1(self.me, x.lobby.busStop)))
+            # Go to lobby of company that is closest and with the shortest route
+            pickup.sort(key = lambda x:
+                (1.0 + 1.0/x.pointsDelivered)*len(self.calculatePathPlus1(self.me, x.lobby.busStop))
+                )
             return pickup
