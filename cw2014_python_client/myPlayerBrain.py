@@ -13,7 +13,7 @@ import simpleAStar
 import sys
 from framework import sendOrders, playerPowerSend
 
-NAME = "Team Merging"
+NAME = "Team Tonmai42"
 SCHOOL = "Harvey Mudd College"
 
 class MyPlayerBrain(object):
@@ -118,8 +118,16 @@ class MyPlayerBrain(object):
                 pickup = self.allPickups(self.me, self.passengers)
                 ptDest = pickup[0].lobby.busStop
             elif  status == "PASSENGER_REFUSED_ENEMY":
-                ptDest = self._find_the_closest_places(filter(lambda c: c != self.me.limo.passenger.destination,
-                    self.companies))
+                ptDest = self._find_the_closest_places(
+                    filter(
+                        lambda c: c not in [enemy.lobby for enemy in self.me.limo.passenger.enemies if enemy.lobby is not None],
+                        self.companies
+                        # filter(
+                        #         lambda c: c != self.me.limo.passenger.destination,
+                        #         self.companies)
+                        # )
+                    )
+                )
             elif (status == "PASSENGER_DELIVERED_AND_PICKED_UP" or
                   status == "PASSENGER_PICKED_UP"):
                 pickup = self.allPickups(self.me, self.passengers)
