@@ -10,9 +10,10 @@
 import random as rand
 import traceback
 import simpleAStar
+import sys
 from framework import sendOrders, playerPowerSend
 
-NAME = "Team James"
+NAME = "Team Tonmai42"
 SCHOOL = "Harvey Mudd College"
 
 class MyPlayerBrain(object):
@@ -117,19 +118,20 @@ class MyPlayerBrain(object):
                 pickup = self.allPickups(self.me, self.passengers)
                 ptDest = pickup[0].lobby.busStop
             elif  status == "PASSENGER_REFUSED_ENEMY":
-                ptDest = rand.choice(filter(lambda c: c != self.me.limo.passenger.destination,
-                    self.companies)).busStop
+                ptDest = self._find_the_closest_places(filter(lambda c: c != self.me.limo.passenger.destination,
+                    self.companies))
             elif (status == "PASSENGER_DELIVERED_AND_PICKED_UP" or
                   status == "PASSENGER_PICKED_UP"):
                 pickup = self.allPickups(self.me, self.passengers)
                 ptDest = self.me.limo.passenger.destination.busStop
-                
+
+            if (self.me.limo.coffeeServings <= 0):
+                ptDest = self._find_the_closest_places(self.stores)
             # coffee store override
-            if(status == "PASSENGER_DELIVERED_AND_PICKED_UP" or status == "PASSENGER_DELIVERED" or status == "PASSENGER_ABANDONED"):
-                if(self.me.limo.coffeeServings <= 0):
-                    ptDest = rand.choice(self.stores).busStop
-            elif(status == "PASSENGER_REFUSED_NO_COFFEE" or status == "PASSENGER_DELIVERED_AND_PICK_UP_REFUSED"):
-                ptDest = rand.choice(self.stores).busStop
+            # elif(status == "PASSENGER_DELIVERED_AND_PICKED_UP" or status == "PASSENGER_DELIVERED" or status == "PASSENGER_ABANDONED"):
+            #    pass
+            #elif(status == "PASSENGER_REFUSED_NO_COFFEE" or status == "PASSENGER_DELIVERED_AND_PICK_UP_REFUSED"):
+            #    ptDest = rand.choice(self.stores).busStop
             elif(status == "COFFEE_STORE_CAR_RESTOCKED"):
                 pickup = self.allPickups(self.me, self.passengers)
                 if len(pickup) != 0:
@@ -147,6 +149,18 @@ class MyPlayerBrain(object):
         except Exception as e:
             print traceback.format_exc()
             raise e
+
+    def _find_the_closest_places(self, places):
+        min_closest_distance = sys.maxint;
+        corresponding_busStop = None
+        for place in places:
+            path = self.calculatePathPlus1(self.me, place.busStop)
+            if len(path) < min_closest_distance:
+                min_closest_distance = len(path)
+                corresponding_busStop = place.busStop
+        print "busStop is"
+        print corresponding_busStop
+        return corresponding_busStop
 
     def displayOrders(self, ptDest):
         msg = None
