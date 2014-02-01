@@ -13,7 +13,7 @@ import simpleAStar
 import sys
 from framework import sendOrders, playerPowerSend
 
-NAME = "Team Tonmai42"
+NAME = "Team Merging"
 SCHOOL = "Harvey Mudd College"
 
 class MyPlayerBrain(object):
@@ -272,10 +272,15 @@ class MyPlayerBrain(object):
         return
     
     def allPickups (self, me, passengers):
-            pickup = [p for p in passengers if (not p in me.passengersDelivered and
-                                                p != me.limo.passenger and
-                                                p.car is None and
-                                                p.lobby is not None and p.destination is not None)]
+            pickup = [p for p in passengers if
+                (
+                    not p in me.passengersDelivered and
+                    p != me.limo.passenger and
+                    p.car is None and
+                    p.lobby is not None and p.destination is not None and
+                    p.destination.busStop not in [enemy.lobby.busStop for enemy in p.enemies if enemy.lobby is not None]
+                )
+            ]
             #rand.shuffle(pickup)
             # Go to lobby of company that is closest and with the shortest route
             pickup.sort(key = lambda x:
