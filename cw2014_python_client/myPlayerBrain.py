@@ -12,7 +12,7 @@ import traceback
 import simpleAStar
 from framework import sendOrders, playerPowerSend
 
-NAME = "Tonmai42"
+NAME = "Team James"
 SCHOOL = "Harvey Mudd College"
 
 class MyPlayerBrain(object):
@@ -262,5 +262,6 @@ class MyPlayerBrain(object):
                                                 p != me.limo.passenger and
                                                 p.car is None and
                                                 p.lobby is not None and p.destination is not None)]
-            rand.shuffle(pickup)
+            #rand.shuffle(pickup)
+            pickup.sort(key = lambda x:len(self.calculatePathPlus1(self.me, x.lobby.busStop)))
             return pickup
