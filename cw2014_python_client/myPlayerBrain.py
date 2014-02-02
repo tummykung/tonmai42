@@ -223,8 +223,8 @@ class MyPlayerBrain(object):
             return
         powerUp = okToPlayHand[0]
         
-        # 10% discard, 90% play
-        if rand.randint(1, 10) == 1:
+        # Discard cards we don't want
+        if powerUp.card == "MULT_DELIVERY_QUARTER_SPEED": 
             playerPowerSend(self, "DISCARD", powerUp)
         else:
             if powerUp.card == "MOVE_PASSENGER":
