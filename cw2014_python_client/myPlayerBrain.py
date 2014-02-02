@@ -254,8 +254,8 @@ class MyPlayerBrain(object):
             self.powerUpHand.remove(powerUp)
             return
         
-        # 10% discard, 90% play
-        if rand.randint(1, 10) == 1:
+        # Discard cards we don't want
+        if powerUp.card == "MULT_DELIVERY_QUARTER_SPEED": 
             playerPowerSend(self, "DISCARD", powerUp)
         else:
             if powerUp.card == "MOVE_PASSENGER":
@@ -323,6 +323,5 @@ class MyPlayerBrain(object):
             #rand.shuffle(pickup)
             # Go to lobby of company that is closest and with the shortest route
             pickup.sort(key = lambda x:
-                (1.0 + 1.0/x.pointsDelivered)*len(self.calculatePathPlus1(self.me, x.lobby.busStop))
-                )
+                (1.0 + 1.0/x.pointsDelivered)*len(self.calculatePathPlus1(self.me, x.lobby.busStop)))
             return pickup
