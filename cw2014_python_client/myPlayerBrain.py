@@ -13,7 +13,7 @@ import simpleAStar
 import sys
 from framework import sendOrders, playerPowerSend
 
-NAME = "Team Tonmai4242"
+NAME = "Team Tum Wee"
 SCHOOL = "Harvey Mudd College"
 
 class MyPlayerBrain(object):
@@ -121,8 +121,8 @@ class MyPlayerBrain(object):
             elif  status == "PASSENGER_REFUSED_ENEMY":
                 enemy = self._get_enemy_at_place(self.me.limo.passenger.destination)
                 self.playPowerUp(action="MOVE_ENEMY", target=enemy)
-                # If the enemy is sill there.
-                if (enemy.lobby == self.me.limo.passenger.destination):
+                # If the enemy is still there.
+                if (enemy is not None and enemy.lobby == self.me.limo.passenger.destination):
                     ptDest = self._find_the_closest_places(
                         filter(
                             lambda c: c not in [enemy.lobby for enemy in self.me.limo.passenger.enemies if enemy.lobby is not None],
@@ -142,6 +142,21 @@ class MyPlayerBrain(object):
 
             if (self.me.limo.coffeeServings <= 0):
                 ptDest = self._find_the_closest_places(self.stores)
+            elif self.me.limo.coffeeServings == 1 and self.me.limo.passenger == None:
+                prospective_coffee_shop = self._find_the_closest_places(self.stores)
+
+                me_to_coffee = len(self.calculatePathPlus1(self.me, prospective_coffee_shop))
+                # coffee_to_dst = len(self.calculatePathPlus1(prospective_coffee_shop, self.me.limo.passenger.destination))
+                # me_to_dst = len(self.calculatePathPlus1(self.me, self.me.limo.passenger.destination))
+                
+                if (me_to_coffee <= 3):
+                    print "Detour to coffee"
+                    print "!" * 70
+                    ptDest = prospective_coffee_shop
+                else:
+                    pickup = self.allPickups(self.me, self.passengers)
+                    if len(pickup) != 0:
+                        ptDest = pickup[0].lobby.busStop
             # coffee store override
             # elif(status == "PASSENGER_DELIVERED_AND_PICKED_UP" or status == "PASSENGER_DELIVERED" or status == "PASSENGER_ABANDONED"):
             #    pass
@@ -238,11 +253,15 @@ class MyPlayerBrain(object):
         
         # can we play one?
         okToPlayHand = filter(lambda p: p.okToPlay, self.powerUpHand)
+        print "len(okToPlayHand) = " + str(len(okToPlayHand)) + "/" + str(self.me.maxCardsInHand)
         if len(okToPlayHand) == 0:
             return
 
         print [my_card.card for my_card in okToPlayHand]
-        powerUp = okToPlayHand[0]
+
+        powerUp = rand.choice(okToPlayHand)
+
+        # by choosing actions
 
         power_up_cards = [power_up_card for power_up_card in okToPlayHand if power_up_card.card == "MOVE_PASSENGER"]
         if action == "MOVE_ENEMY" and target != None and len(power_up_cards) > 0:
@@ -255,20 +274,19 @@ class MyPlayerBrain(object):
             return
         
         # Discard cards we don't want
-        if powerUp.card == "MULT_DELIVERY_QUARTER_SPEED": 
+        if powerUp.card in ["MULT_DELIVERY_QUARTER_SPEED", "MULT_DELIVERING_PASSENGER", "MULT_DELIVER_AT_COMPANY"]: 
             playerPowerSend(self, "DISCARD", powerUp)
         else:
+            # by highest score
             if powerUp.card == "MOVE_PASSENGER":
-                powerUp.passenger = rand.choice(filter(lambda p: p.car is None, self.passengers))
-            
-            # change to elif
+                return
+            #    powerUp.passenger = rand.choice(filter(lambda p: p.car is None, self.passengers))          
             elif powerUp.card == "CHANGE_DESTINATION":
                 playersWithPassengers = filter(lambda p: p.guid != self.me.guid and p.limo.passenger is not None, self.players)
                 if len(playersWithPassengers) == 0:
                     return
                 powerUp.player = sorted(playersWithPassengers, key = lambda p: p.score, reverse = True)[0]
                 #powerUp.player = rand.choice(playersWithPassengers)
-
             elif powerUp.card == "STOP_CAR":
                 playersDone = filter(lambda p: p.guid != self.me.guid and (p.limo.coffeeServins <= 1 or p.limo.passenger is not None), self.players)
                 if len(playersDone) == 0:
