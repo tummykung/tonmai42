@@ -101,8 +101,9 @@ class MyPlayerBrain(object):
             pickup = []
             
             if status == "UPDATE":
-                self.maybePlayPowerUp()
+                self.playPowerUp()
                 return
+                # return
             
             self.displayStatus(status, playerStatus)
             
@@ -118,16 +119,22 @@ class MyPlayerBrain(object):
                 pickup = self.allPickups(self.me, self.passengers)
                 ptDest = pickup[0].lobby.busStop
             elif  status == "PASSENGER_REFUSED_ENEMY":
-                ptDest = self._find_the_closest_places(
-                    filter(
-                        lambda c: c not in [enemy.lobby for enemy in self.me.limo.passenger.enemies if enemy.lobby is not None],
-                        self.companies
-                        # filter(
-                        #         lambda c: c != self.me.limo.passenger.destination,
-                        #         self.companies)
-                        # )
+                enemy = self._get_enemy_at_place(self.me.limo.passenger.destination)
+                self.playPowerUp(action="MOVE_ENEMY", target=enemy)
+                # If the enemy is sill there.
+                if (enemy.lobby == self.me.limo.passenger.destination):
+                    ptDest = self._find_the_closest_places(
+                        filter(
+                            lambda c: c not in [enemy.lobby for enemy in self.me.limo.passenger.enemies if enemy.lobby is not None],
+                            self.companies
+                            # filter(
+                            #         lambda c: c != self.me.limo.passenger.destination,
+                            #         self.companies)
+                            # )
+                        )
                     )
-                )
+                else:
+                    ptDest = self.me.limo.passenger.destination
             elif (status == "PASSENGER_DELIVERED_AND_PICKED_UP" or
                   status == "PASSENGER_PICKED_UP"):
                 pickup = self.allPickups(self.me, self.passengers)
@@ -157,6 +164,17 @@ class MyPlayerBrain(object):
         except Exception as e:
             print traceback.format_exc()
             raise e
+
+    def _get_enemy_at_place(self, place):
+        possible_enemies_list = filter(
+            lambda e: e.lobby == place,
+            self.me.limo.passenger.enemies
+        )
+
+        if len(possible_enemies_list) > 0:
+            return possible_enemies_list[0]
+        else:
+            return None
 
     def _find_the_closest_places(self, places):
         min_closest_distance = sys.maxint;
@@ -195,7 +213,7 @@ class MyPlayerBrain(object):
         if msg is not None:
             print(msg)
 
-    def calculatePathPlus1 (self, me, ptDest):
+    def calculatePathPlus1(self, me, ptDest):
         path = simpleAStar.calculatePath(self.gameMap, me.limo.tilePosition, ptDest)
         # add in leaving the bus stop so it has orders while we get the message
         # saying it got there and are deciding what to do next.
@@ -203,7 +221,8 @@ class MyPlayerBrain(object):
             path.append(path[-2])
         return path
     
-    def maybePlayPowerUp(self):
+    def playPowerUp(self, action=None, target=None):
+
         if len(self.powerUpHand) is not 0 and rand.randint(0, 50) < 30:
             return
         # not enough, draw
@@ -221,7 +240,19 @@ class MyPlayerBrain(object):
         okToPlayHand = filter(lambda p: p.okToPlay, self.powerUpHand)
         if len(okToPlayHand) == 0:
             return
+
+        print [my_card.card for my_card in okToPlayHand]
         powerUp = okToPlayHand[0]
+
+        power_up_cards = [power_up_card for power_up_card in okToPlayHand if power_up_card.card == "MOVE_PASSENGER"]
+        if action == "MOVE_ENEMY" and target != None and len(power_up_cards) > 0:
+            powerUp = power_up_cards[0]
+            powerUp.passenger = target
+            playerPowerSend(self, "PLAY", powerUp)
+            print "*" * 70
+            print "Playing powerup " + powerUp.card
+            self.powerUpHand.remove(powerUp)
+            return
         
         # 10% discard, 90% play
         if rand.randint(1, 10) == 1:
