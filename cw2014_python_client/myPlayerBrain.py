@@ -13,7 +13,7 @@ import simpleAStar
 import sys
 from framework import sendOrders, playerPowerSend
 
-NAME = "Team Tonmai42"
+NAME = "Team Tonmai4242"
 SCHOOL = "Harvey Mudd College"
 
 class MyPlayerBrain(object):
@@ -229,11 +229,23 @@ class MyPlayerBrain(object):
         else:
             if powerUp.card == "MOVE_PASSENGER":
                 powerUp.passenger = rand.choice(filter(lambda p: p.car is None, self.passengers))
-            if powerUp.card == "CHANGE_DESTINATION" or powerUp.card == "STOP_CAR":
+            
+            # change to elif
+            elif powerUp.card == "CHANGE_DESTINATION":
                 playersWithPassengers = filter(lambda p: p.guid != self.me.guid and p.limo.passenger is not None, self.players)
                 if len(playersWithPassengers) == 0:
                     return
-                powerUp.player = rand.choice(playersWithPassengers)
+                powerUp.player = sorted(playersWithPassengers, key = lambda p: p.score, reverse = True)[0]
+                #powerUp.player = rand.choice(playersWithPassengers)
+
+            elif powerUp.card == "STOP_CAR":
+                playersDone = filter(lambda p: p.guid != self.me.guid and (p.limo.coffeeServins <= 1 or p.limo.passenger is not None), self.players)
+                if len(playersDone) == 0:
+                    return
+                powerUp.player = sorted(playersDone, key = lambda p: p.score, reverse = True)[0]
+                #powerUp.player = rand.choice(playersWithPassengers)
+
+                ##limo.coffeeServings <= 0
 
             playerPowerSend(self, "PLAY", powerUp)
             print "Playing powerup " + powerUp.card
